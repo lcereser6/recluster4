@@ -1,0 +1,69 @@
+# Mac Mini M1 for ARM workloads
+# Uses smart plug for power management
+apiVersion: recluster.io/v1
+kind: RcNode
+metadata:
+  name: mac-mini-m1-01
+  labels:
+    recluster.io/node-group: arm-dev
+    location: office-b
+spec:
+  nodeGroup: arm-dev
+  desiredPhase: Offline
+
+  resources:
+    allocatable:
+      cpu: "8"
+      memory: 14Gi
+      pods: "60"
+    systemReserved:
+      cpu: "500m"
+      memory: 2Gi
+
+  compute:
+    architecture: arm64
+    vendor: Apple
+    model: "M1"
+    cores: 8
+    threads: 8
+    benchmarks:
+      singleThreadScore: 3900
+      multiThreadScore: 14500
+
+  memory:
+    total: 16Gi
+    type: LPDDR4X
+    benchmarks:
+      bandwidthMBps: 68000
+      latencyNs: 35
+
+  storage:
+    total: 512Gi
+    type: NVMe
+    benchmarks:
+      sequentialReadMBps: 3200
+      sequentialWriteMBps: 2700
+      randomReadIOPS: 400000
+
+  power:
+    idleWatts: 6
+    maxWatts: 39
+    powerCurve:
+      - utilizationPercent: 0
+        watts: 6
+      - utilizationPercent: 50
+        watts: 18
+      - utilizationPercent: 100
+        watts: 39
+
+  activation:
+    bootTimeSeconds:
+      p50: 12
+      p95: 18
+    shutdownTimeSeconds: 8
+    wakeMethod: smartplug
+    smartPlugConfig:
+      host: "homeassistant.local"
+      port: 8123
+      plugId: "switch.mac_mini_power"
+      authSecretRef: "homeassistant-token"

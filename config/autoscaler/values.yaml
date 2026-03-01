@@ -1,0 +1,52 @@
+# Cluster Autoscaler Helm values for KWOK provider
+# Scale down time set to 20 seconds as requested
+cloudProvider: kwok
+
+image:
+  repository: registry.k8s.io/autoscaling/cluster-autoscaler
+  tag: v1.31.0
+
+autoscalingGroups: []
+
+# KWOK provider doesn't use autoDiscovery but helm chart requires it
+autoDiscovery:
+  clusterName: recluster-dev
+
+extraEnv:
+  POD_NAMESPACE:
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.namespace
+
+# Autoscaler settings optimized for development/testing
+extraArgs:
+  # Scale down settings - 20 seconds as requested
+  scale-down-delay-after-add: "20s"
+  scale-down-delay-after-delete: "20s"
+  scale-down-delay-after-failure: "20s"
+  scale-down-unneeded-time: "20s"
+  scale-down-unready-time: "20s"
+  # Scale up settings
+  scan-interval: "10s"
+  # Logging
+  v: "4"
+  logtostderr: "true"
+  stderrthreshold: "info"
+  # Skip nodes with local storage for faster testing
+  skip-nodes-with-local-storage: "false"
+  # Skip nodes with system pods
+  skip-nodes-with-system-pods: "false"
+
+rbac:
+  create: true
+  serviceAccount:
+    create: true
+    name: cluster-autoscaler
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 300Mi
+  requests:
+    cpu: 100m
+    memory: 300Mi

@@ -1,0 +1,75 @@
+# Dell PowerEdge R720 server with IPMI
+# Uses SSH to IPMI for power management
+apiVersion: recluster.io/v1
+kind: RcNode
+metadata:
+  name: server-r720-01
+  labels:
+    recluster.io/node-group: x86-remote
+    location: datacenter
+    rack: "rack-a"
+spec:
+  nodeGroup: x86-remote
+  desiredPhase: Offline
+
+  resources:
+    allocatable:
+      cpu: "32"
+      memory: 248Gi
+      pods: "200"
+    systemReserved:
+      cpu: "4"
+      memory: 8Gi
+
+  compute:
+    architecture: amd64
+    vendor: Intel
+    model: "Xeon E5-2680 v2"
+    cores: 20
+    threads: 40
+    benchmarks:
+      singleThreadScore: 1650
+      multiThreadScore: 22000
+
+  memory:
+    total: 256Gi
+    type: DDR3
+    benchmarks:
+      bandwidthMBps: 51200
+      latencyNs: 60
+
+  storage:
+    total: 4Ti
+    type: SSD
+    benchmarks:
+      sequentialReadMBps: 2000
+      sequentialWriteMBps: 1500
+      randomReadIOPS: 200000
+
+  power:
+    idleWatts: 150
+    maxWatts: 450
+    powerCurve:
+      - utilizationPercent: 0
+        watts: 150
+      - utilizationPercent: 25
+        watts: 220
+      - utilizationPercent: 50
+        watts: 300
+      - utilizationPercent: 75
+        watts: 380
+      - utilizationPercent: 100
+        watts: 450
+
+  activation:
+    bootTimeSeconds:
+      p50: 90
+      p95: 120
+    shutdownTimeSeconds: 30
+    wakeMethod: ssh
+    sshConfig:
+      host: "192.168.1.100"
+      port: 22
+      user: "root"
+      authSecretRef: "ipmi-ssh-key"
+      wakeCommand: "ipmitool chassis power on"

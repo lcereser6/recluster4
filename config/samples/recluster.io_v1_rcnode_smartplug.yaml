@@ -1,0 +1,68 @@
+apiVersion: recluster.io/v1
+kind: RcNode
+metadata:
+  name: rcn-arm-dev-01
+spec:
+  nodeGroup: arm-dev
+  desiredPhase: Offline
+  
+  resources:
+    allocatable:
+      cpu: "4"
+      memory: 8Gi
+      pods: "50"
+    systemReserved:
+      cpu: "0.5"
+      memory: 1Gi
+  
+  compute:
+    architecture: arm64
+    vendor: Raspberry Pi
+    model: Raspberry Pi 5
+    cores: 4
+    threads: 4
+    benchmarks:
+      singleThreadScore: 400
+      multiThreadScore: 1600
+  
+  memory:
+    total: 8Gi
+    type: LPDDR4X
+    benchmarks:
+      bandwidthMBps: 34000
+      latencyNs: 90
+  
+  storage:
+    total: 256Gi
+    type: SSD
+    benchmarks:
+      sequentialReadMBps: 400
+      sequentialWriteMBps: 350
+      randomReadIOPS: 50000
+  
+  power:
+    idleWatts: 3
+    maxWatts: 12
+    powerCurve:
+      - utilizationPercent: 0
+        watts: 3
+      - utilizationPercent: 50
+        watts: 7
+      - utilizationPercent: 100
+        watts: 12
+  
+  activation:
+    bootTimeSeconds:
+      p50: 30
+      p95: 45
+    shutdownTimeSeconds: 15
+    wakeMethod: smartplug
+    smartPlugConfig:
+      host: "192.168.1.50"
+      port: 9999
+      plugId: "outlet-1"
+      authSecretRef: "smartplug-credentials"
+  
+  labels:
+    topology.kubernetes.io/zone: zone-a
+    recluster.io/priority: high

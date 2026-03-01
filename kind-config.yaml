@@ -1,0 +1,31 @@
+# Kind cluster configuration for CRD development
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: recluster-dev
+nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      # Expose ports for local development
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP
+      - containerPort: 30000
+        hostPort: 30000
+        protocol: TCP
+      # Grafana (NodePort 30030)
+      - containerPort: 30030
+        hostPort: 30030
+        protocol: TCP
+      # Prometheus (NodePort 30090)
+      - containerPort: 30090
+        hostPort: 30090
+        protocol: TCP

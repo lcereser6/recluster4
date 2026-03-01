@@ -1,0 +1,179 @@
+---
+# Example RcPolicy with modular multipliers matching RcNode features
+# Each multiplier.name matches a feature.name in RcNode
+
+apiVersion: recluster.io/v1
+kind: RcPolicy
+metadata:
+  name: performance-optimized
+spec:
+  # Priority for policy selection (higher takes precedence)
+  priority: 10
+
+  # Rate limits for power operations
+  budgets:
+    maxConcurrentPowerOns: 5  # Allow more concurrent boots for performance
+    maxMigrationsPerHour: 20  # Allow more migrations for rebalancing
+    maxPowerOnsPerHour: 30
+
+  # Modular multipliers - each matches an RcNode feature by name
+  multipliers:
+    # Compute features
+    - name: "compute.cores"
+      value: 10.0
+      curve: linear
+      weight: 90
+      required: true
+      description: "Reward more CPU cores"
+
+    - name: "compute.threads"
+      value: 5.0
+      curve: logarithmic
+      weight: 60
+      description: "Threads with diminishing returns"
+
+    - name: "compute.clockMhz"
+      value: 0.01
+      curve: linear
+      weight: 40
+      curveParams:
+        normalize: 1000
+      description: "Higher clock speed is better"
+
+    # Memory features
+    - name: "memory.total"
+      value: 2.0
+      curve: logarithmic
+      weight: 80
+      curveParams:
+        normalize: 1073741824
+      description: "More memory is better"
+
+    # Power features (negative = lower is better)
+    - name: "power.idle"
+      value: -0.5
+      curve: linear
+      weight: 50
+      description: "Penalize high idle power"
+
+    - name: "power.max"
+      value: -0.1
+      curve: linear
+      weight: 30
+      description: "Penalize high max power"
+
+    # Boot time (negative = faster is better)
+    - name: "boot.timeSeconds"
+      value: -1.0
+      curve: inverse
+      weight: 50
+      curveParams:
+        offset: 10.0
+      description: "Faster boot time is better"
+
+  # Time constraints
+  timeConstraints:
+    maxBootTimeSeconds: 120
+    maxShutdownTimeSeconds: 60
+    preferOnlineNodes: true
+    onlineBonus: 100
+
+  # Deployment selector
+  deploymentSelector:
+    matchLabels:
+      workload-type: performance
+    namespaces:
+      - default
+      - production
+
+  baseScore: 0
+  normalizeScores: false
+
+---
+# Cost-optimized policy
+apiVersion: recluster.io/v1
+kind: RcPolicy
+metadata:
+  name: cost-optimized
+spec:
+  priority: 5  # Lower priority than performance
+
+  budgets:
+    maxConcurrentPowerOns: 2  # Conservative power management
+    maxMigrationsPerHour: 5   # Minimize migrations to reduce churn
+    maxPowerOnsPerHour: 10
+
+  multipliers:
+    - name: "compute.cores"
+      value: 1.0
+      curve: step
+      weight: 100
+      required: true
+      curveParams:
+        threshold: 2
+
+    - name: "memory.total"
+      value: 1.0
+      curve: step
+      weight: 100
+      curveParams:
+        threshold: 4294967296
+
+    - name: "power.idle"
+      value: -10.0
+      curve: exponential
+      weight: 100
+      curveParams:
+        exponent: 2.0
+      description: "Strongly penalize idle power"
+
+  timeConstraints:
+    preferOnlineNodes: true
+    onlineBonus: 200
+
+  deploymentSelector:
+    matchLabels:
+      cost-sensitive: "true"
+
+  normalizeScores: true
+  priority: 5
+
+---
+# Latency-sensitive policy
+apiVersion: recluster.io/v1
+kind: RcPolicy
+metadata:
+  name: latency-sensitive
+spec:
+  multipliers:
+    - name: "boot.timeSeconds"
+      value: -100.0
+      curve: inverse
+      weight: 100
+      required: true
+      curveParams:
+        offset: 1.0
+        max: 100.0
+
+    - name: "compute.clockMhz"
+      value: 1.0
+      curve: linear
+      weight: 80
+      curveParams:
+        normalize: 100
+
+  timeConstraints:
+    maxBootTimeSeconds: 30
+    schedulingDeadlineSeconds: 60
+    preferOnlineNodes: true
+    onlineBonus: 500
+
+  deploymentSelector:
+    matchAnnotations:
+      recluster.io/latency-sensitive: "true"
+
+  nodeSelector:
+    node-class: high-performance
+
+  normalizeScores: true
+  priority: 100

@@ -1,0 +1,112 @@
+# Example RcNode with modular features
+# This demonstrates how to define arbitrary node characteristics
+apiVersion: recluster.unibo.it/v1
+kind: RcNode
+metadata:
+  name: rcnode-sample
+spec:
+  nodeGroup: default
+  desiredPhase: Offline
+  
+  # Kubernetes-native resources for scheduling
+  resources:
+    allocatable:
+      cpu: "4"
+      memory: "8Gi"
+      ephemeral-storage: "100Gi"
+    reserved:
+      cpu: "500m"
+      memory: "512Mi"
+
+  # Activation configuration for power management
+  activation:
+    wakeMethod: wol
+    wolConfig:
+      macAddress: "aa:bb:cc:dd:ee:ff"
+      broadcastAddress: "192.168.1.255"
+
+  # Flexible features - add any characteristics you want
+  features:
+    # Compute features
+    - name: compute.cores
+      type: integer
+      value: "4"
+      description: "Number of physical CPU cores"
+    - name: compute.threads
+      type: integer
+      value: "8"
+      description: "Total number of CPU threads"
+    - name: compute.architecture
+      type: string
+      value: "amd64"
+    - name: compute.model
+      type: string
+      value: "Intel Core i5-10400"
+    - name: compute.clockmhz
+      type: integer
+      value: "2900"
+      unit: "MHz"
+    - name: compute.benchmark.single
+      type: integer
+      value: "1200"
+      description: "Geekbench single-core score"
+    - name: compute.benchmark.multi
+      type: integer
+      value: "5800"
+      description: "Geekbench multi-core score"
+    
+    # Memory features
+    - name: memory.total
+      type: quantity
+      value: "8Gi"
+    - name: memory.type
+      type: string
+      value: "DDR4"
+    - name: memory.speedmhz
+      type: integer
+      value: "3200"
+      unit: "MHz"
+    - name: memory.bandwidthmbps
+      type: integer
+      value: "51200"
+      unit: "MB/s"
+    
+    # Storage features
+    - name: storage.total
+      type: quantity
+      value: "256Gi"
+    - name: storage.type
+      type: string
+      value: "NVMe"
+    - name: storage.readmbps
+      type: integer
+      value: "3500"
+      unit: "MB/s"
+    - name: storage.writembps
+      type: integer
+      value: "2800"
+      unit: "MB/s"
+    
+    # Power features
+    - name: power.idle
+      type: integer
+      value: "45"
+      unit: "watts"
+    - name: power.max
+      type: integer
+      value: "150"
+      unit: "watts"
+    
+    # Timing features
+    - name: boot.timeseconds
+      type: integer
+      value: "25"
+      unit: "seconds"
+    - name: shutdown.timeseconds
+      type: integer
+      value: "10"
+      unit: "seconds"
+
+  labels:
+    location: "rack-1"
+    tier: "standard"

@@ -1,0 +1,59 @@
+# Sample RcNode 1: Desktop workstation
+apiVersion: recluster.io/v1
+kind: RcNode
+metadata:
+  name: desktop-workstation-01
+  labels:
+    recluster.io/node-group: desktops
+spec:
+  nodeGroup: desktops
+  desiredPhase: Offline
+
+  activation:
+    wakeMethod: wol
+    wolConfig:
+      macAddress: "AA:BB:CC:DD:EE:01"
+      broadcastAddress: "192.168.1.255"
+
+  resources:
+    allocatable:
+      cpu: "8"
+      memory: 32Gi
+      pods: "110"
+
+  features:
+    - name: compute.cores
+      type: integer
+      value: "8"
+      description: "Intel Core i7 8 cores"
+    - name: compute.threads
+      type: integer
+      value: "16"
+    - name: compute.clockmhz
+      type: integer
+      value: "3600"
+      unit: "MHz"
+    - name: memory.total
+      type: quantity
+      value: "32Gi"
+    - name: memory.type
+      type: string
+      value: "DDR4"
+    - name: storage.total
+      type: quantity
+      value: "1Ti"
+    - name: storage.type
+      type: string
+      value: "NVMe"
+    - name: power.idle
+      type: integer
+      value: "65"
+      unit: "watts"
+    - name: power.max
+      type: integer
+      value: "250"
+      unit: "watts"
+    - name: boot.timeseconds
+      type: integer
+      value: "45"
+      unit: "seconds"

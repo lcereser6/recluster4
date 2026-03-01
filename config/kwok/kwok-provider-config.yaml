@@ -1,0 +1,15 @@
+# KWOK Provider Configuration for Cluster Autoscaler
+apiVersion: v1alpha1
+# Use static node templates from the kwok-provider-templates ConfigMap
+readNodesFrom: configmap
+nodegroups:
+  # Group nodes by the 'recluster.io/node-group' label
+  # This matches how RcNodes define their nodeGroup
+  fromNodeLabelKey: "recluster.io/node-group"
+nodes:
+  # Skip adding the kwok-provider taint so pods can be scheduled
+  # Set to false in production to prevent accidental scheduling on fake nodes
+  skipTaint: true
+configmap:
+  name: kwok-provider-templates
+  key: templates

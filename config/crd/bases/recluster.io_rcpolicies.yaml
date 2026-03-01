@@ -1,0 +1,311 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.2
+  name: rcpolicies.recluster.io
+spec:
+  group: recluster.io
+  names:
+    kind: RcPolicy
+    listKind: RcPolicyList
+    plural: rcpolicies
+    singular: rcpolicy
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.priority
+      name: Priority
+      type: integer
+    - jsonPath: .spec.multipliers
+      name: Multipliers
+      type: integer
+    - jsonPath: .status.matchingNodes
+      name: Matching Nodes
+      type: integer
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          RcPolicy is the Schema for the rcpolicies API.
+          RcPolicy defines scoring multipliers for RcNode characteristics,
+          allowing administrators to configure how nodes are scored and prioritized
+          for workload placement.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              RcPolicySpec defines the desired state of RcPolicy.
+              RcPolicy contains scoring multipliers for RcNode features.
+              Each multiplier in the Multipliers array corresponds to a feature in RcNode.
+              This allows direct multiplication: score = sum(nodeFeature * multiplier) for each matching pair.
+            properties:
+              baseScore:
+                default: 0
+                description: BaseScore is added to every node's calculated score
+                type: number
+              budgets:
+                description: Budgets defines operational limits for this policy
+                properties:
+                  maxConcurrentPowerOns:
+                    default: 3
+                    description: MaxConcurrentPowerOns limits how many nodes can be
+                      booted simultaneously
+                    minimum: 1
+                    type: integer
+                  maxMigrationsPerHour:
+                    default: 10
+                    description: MaxMigrationsPerHour limits pod migrations for rebalancing
+                    minimum: 0
+                    type: integer
+                  maxPowerOnsPerHour:
+                    default: 20
+                    description: MaxPowerOnsPerHour limits total node power-ons per
+                      hour
+                    minimum: 0
+                    type: integer
+                type: object
+              deploymentSelector:
+                description: |-
+                  DeploymentSelector defines which deployments this policy applies to
+                  If not specified, the policy can be referenced by name in deployment annotations
+                properties:
+                  matchAnnotations:
+                    additionalProperties:
+                      type: string
+                    description: MatchAnnotations selects deployments with these annotations
+                    type: object
+                  matchLabels:
+                    additionalProperties:
+                      type: string
+                    description: MatchLabels selects deployments with these labels
+                    type: object
+                  names:
+                    description: Names is a list of specific deployment names to match
+                    items:
+                      type: string
+                    type: array
+                  namespaces:
+                    description: |-
+                      Namespaces limits the policy to these namespaces
+                      If empty, applies to all namespaces
+                    items:
+                      type: string
+                    type: array
+                type: object
+              multipliers:
+                description: |-
+                  Multipliers is the array of feature multipliers.
+                  Each multiplier matches an RcNode feature by name and defines
+                  how that feature contributes to the node's score.
+                  This is the modular, flexible way to define scoring.
+                items:
+                  description: |-
+                    Multiplier represents a scoring multiplier for an RcNode feature.
+                    Multipliers mirror the Feature structure in RcNode, allowing direct
+                    matching between policy multipliers and node features.
+
+                    The Name field must match an RcNode feature name exactly.
+                    When calculating scores: score = nodeFeatureValue * multiplier.value
+
+                    Common multiplier names (matching RcNode features):
+                      - compute.cores: Multiplier for CPU cores
+                      - compute.threads: Multiplier for threads
+                      - compute.clockMhz: Multiplier for clock speed
+                      - compute.benchmark.single: Multiplier for single-thread benchmark
+                      - compute.benchmark.multi: Multiplier for multi-thread benchmark
+                      - memory.total: Multiplier for total memory
+                      - memory.bandwidthMbps: Multiplier for memory bandwidth
+                      - storage.total: Multiplier for total storage
+                      - storage.readMbps: Multiplier for read speed
+                      - storage.writeMbps: Multiplier for write speed
+                      - power.idle: Multiplier for idle power (usually negative)
+                      - power.max: Multiplier for max power (usually negative)
+                      - network.bandwidth: Multiplier for network bandwidth
+                      - boot.timeSeconds: Multiplier for boot time (usually negative)
+                      - shutdown.timeSeconds: Multiplier for shutdown time (usually negative)
+                  properties:
+                    curve:
+                      default: linear
+                      description: Curve defines how the feature value is transformed
+                        before multiplying.
+                      enum:
+                      - linear
+                      - logarithmic
+                      - exponential
+                      - inverse
+                      - step
+                      - sigmoid
+                      type: string
+                    curveParams:
+                      description: CurveParams contains parameters for the selected
+                        curve
+                      properties:
+                        exponent:
+                          default: 2
+                          description: 'Exponent for exponential curve (default: 2.0)'
+                          type: number
+                        max:
+                          description: Max clamps the output score to this maximum
+                            value
+                          type: number
+                        midpoint:
+                          description: Midpoint for sigmoid curve - the center of
+                            the S-curve
+                          type: number
+                        min:
+                          description: Min clamps the output score to this minimum
+                            value
+                          type: number
+                        normalize:
+                          description: |-
+                            Normalize divides the input value by this before applying the curve
+                            Useful for normalizing different units (e.g., divide bytes by 1Gi)
+                          type: number
+                        offset:
+                          default: 1
+                          description: 'Offset for inverse curve to avoid division
+                            by zero (default: 1.0)'
+                          type: number
+                        scale:
+                          default: 1
+                          description: 'Scale for sigmoid curve - controls steepness
+                            (default: 1.0)'
+                          type: number
+                        threshold:
+                          description: Threshold for step curve - value must be >=
+                            this to score
+                          type: number
+                      type: object
+                    description:
+                      description: Description provides human-readable context for
+                        this multiplier
+                      type: string
+                    name:
+                      description: |-
+                        Name is the feature name this multiplier applies to.
+                        Must match an RcNode feature name exactly (e.g., "compute.cores", "memory.total")
+                      pattern: ^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$
+                      type: string
+                    required:
+                      description: Required if true, nodes without this feature get
+                        score 0
+                      type: boolean
+                    value:
+                      default: 1
+                      description: |-
+                        Value is the multiplier value applied to the feature.
+                        Positive values reward higher feature values.
+                        Negative values penalize higher feature values (good for power, latency, boot time).
+                      type: number
+                    weight:
+                      default: 100
+                      description: |-
+                        Weight for this multiplier in the overall score (0-100)
+                        Higher weight means this multiplier has more influence on the final score
+                      maximum: 100
+                      minimum: 0
+                      type: integer
+                  required:
+                  - name
+                  type: object
+                type: array
+              nodeGroupSelector:
+                description: |-
+                  NodeGroupSelector limits this policy to nodes in specific node groups
+                  If empty, applies to all nodes
+                items:
+                  type: string
+                type: array
+              nodeSelector:
+                additionalProperties:
+                  type: string
+                description: NodeSelector limits this policy to nodes matching these
+                  labels
+                type: object
+              normalizeScores:
+                default: false
+                description: NormalizeScores if true, normalizes final scores to 0-100
+                  range
+                type: boolean
+              priority:
+                default: 0
+                description: |-
+                  Priority determines which policy takes precedence when multiple policies match
+                  Higher values = higher priority
+                type: integer
+              timeConstraints:
+                description: TimeConstraints defines time-based scheduling preferences
+                properties:
+                  maxBootTimeSeconds:
+                    description: |-
+                      MaxBootTimeSeconds is the maximum acceptable boot time for nodes
+                      Nodes with boot.timeSeconds > this value will be penalized or excluded
+                    type: integer
+                  maxShutdownTimeSeconds:
+                    description: MaxShutdownTimeSeconds is the maximum acceptable
+                      shutdown time for nodes
+                    type: integer
+                  onlineBonus:
+                    default: 100
+                    description: OnlineBonus is the score bonus for nodes that are
+                      already online
+                    type: number
+                  preferOnlineNodes:
+                    default: true
+                    description: |-
+                      PreferOnlineNodes if true, gives strong preference to already-online nodes
+                      to avoid boot time delays
+                    type: boolean
+                  schedulingDeadlineSeconds:
+                    description: |-
+                      SchedulingDeadlineSeconds is the deadline for the workload to be scheduled
+                      The planner will prioritize nodes that can boot within this deadline
+                    type: integer
+                type: object
+            type: object
+          status:
+            description: RcPolicyStatus defines the observed state of RcPolicy.
+            properties:
+              lastUpdated:
+                description: LastUpdated is the timestamp when this policy was last
+                  processed
+                format: date-time
+                type: string
+              matchingDeployments:
+                description: MatchingDeployments is the count of deployments that
+                  match this policy
+                type: integer
+              matchingNodes:
+                description: MatchingNodes is the count of nodes that match this policy's
+                  selectors
+                type: integer
+              message:
+                description: Message provides additional status information
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

@@ -1,0 +1,135 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kwok-provider-templates
+  namespace: kube-system
+data:
+  templates: |
+    apiVersion: v1
+    kind: List
+    items:
+      # x86-old node group - older Intel servers
+      - apiVersion: v1
+        kind: Node
+        metadata:
+          name: kwok-x86-old-template
+          labels:
+            recluster.io/node-group: x86-old
+            node.kubernetes.io/instance-type: x86-old
+            kubernetes.io/arch: amd64
+            kubernetes.io/os: linux
+            topology.kubernetes.io/zone: zone-b
+            recluster.io/priority: low
+          annotations:
+            cluster-autoscaler.kwok.nodegroup/min-count: "0"
+            cluster-autoscaler.kwok.nodegroup/max-count: "10"
+            node.kubernetes.io/instance-type: x86-old
+        spec:
+          taints:
+            - key: "kwok.x-k8s.io/node"
+              value: "fake"
+              effect: "NoSchedule"
+        status:
+          allocatable:
+            cpu: "15"
+            memory: 28Gi
+            pods: "110"
+            ephemeral-storage: 500Gi
+          capacity:
+            cpu: "16"
+            memory: 32Gi
+            pods: "110"
+            ephemeral-storage: 500Gi
+          conditions:
+            - type: Ready
+              status: "True"
+              reason: KubeletReady
+              message: "kwok is posting ready status"
+          nodeInfo:
+            kubeletVersion: fake
+            architecture: amd64
+            operatingSystem: linux
+
+      # arm-dev node group - Raspberry Pi / ARM devices
+      - apiVersion: v1
+        kind: Node
+        metadata:
+          name: kwok-arm-dev-template
+          labels:
+            recluster.io/node-group: arm-dev
+            node.kubernetes.io/instance-type: arm-dev
+            kubernetes.io/arch: arm64
+            kubernetes.io/os: linux
+            topology.kubernetes.io/zone: zone-a
+            recluster.io/priority: high
+          annotations:
+            cluster-autoscaler.kwok.nodegroup/min-count: "0"
+            cluster-autoscaler.kwok.nodegroup/max-count: "20"
+            node.kubernetes.io/instance-type: arm-dev
+        spec:
+          taints:
+            - key: "kwok.x-k8s.io/node"
+              value: "fake"
+              effect: "NoSchedule"
+        status:
+          allocatable:
+            cpu: "4"
+            memory: 8Gi
+            pods: "50"
+            ephemeral-storage: 256Gi
+          capacity:
+            cpu: "4"
+            memory: 8Gi
+            pods: "50"
+            ephemeral-storage: 256Gi
+          conditions:
+            - type: Ready
+              status: "True"
+              reason: KubeletReady
+              message: "kwok is posting ready status"
+          nodeInfo:
+            kubeletVersion: fake
+            architecture: arm64
+            operatingSystem: linux
+
+      # x86-remote node group - powerful remote servers
+      - apiVersion: v1
+        kind: Node
+        metadata:
+          name: kwok-x86-remote-template
+          labels:
+            recluster.io/node-group: x86-remote
+            node.kubernetes.io/instance-type: x86-remote
+            kubernetes.io/arch: amd64
+            kubernetes.io/os: linux
+            topology.kubernetes.io/zone: zone-c
+            recluster.io/priority: medium
+          annotations:
+            cluster-autoscaler.kwok.nodegroup/min-count: "0"
+            cluster-autoscaler.kwok.nodegroup/max-count: "5"
+            node.kubernetes.io/instance-type: x86-remote
+        spec:
+          taints:
+            - key: "kwok.x-k8s.io/node"
+              value: "fake"
+              effect: "NoSchedule"
+        status:
+          allocatable:
+            cpu: "32"
+            memory: 64Gi
+            pods: "200"
+            ephemeral-storage: 2Ti
+          capacity:
+            cpu: "32"
+            memory: 128Gi
+            pods: "200"
+            ephemeral-storage: 2Ti
+          conditions:
+            - type: Ready
+              status: "True"
+              reason: KubeletReady
+              message: "kwok is posting ready status"
+          nodeInfo:
+            kubeletVersion: fake
+            architecture: amd64
+            operatingSystem: linux

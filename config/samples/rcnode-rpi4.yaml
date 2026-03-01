@@ -1,0 +1,116 @@
+# Raspberry Pi 4 Example with modular features
+apiVersion: recluster.unibo.it/v1
+kind: RcNode
+metadata:
+  name: rpi4-node-01
+spec:
+  nodeGroup: raspberry-pi
+  desiredPhase: Offline
+  
+  resources:
+    allocatable:
+      cpu: "4"
+      memory: "4Gi"
+      ephemeral-storage: "32Gi"
+    reserved:
+      cpu: "200m"
+      memory: "256Mi"
+
+  activation:
+    wakeMethod: smartplug
+    smartPlugConfig:
+      host: "192.168.1.100"
+      port: 9999
+      plugId: "outlet-1"
+
+  features:
+    # Compute
+    - name: compute.cores
+      type: integer
+      value: "4"
+    - name: compute.architecture
+      type: string
+      value: "arm64"
+    - name: compute.model
+      type: string
+      value: "Cortex-A72"
+    - name: compute.clockmhz
+      type: integer
+      value: "1500"
+      unit: "MHz"
+    - name: compute.benchmark.single
+      type: integer
+      value: "254"
+    - name: compute.benchmark.multi
+      type: integer
+      value: "732"
+    
+    # Memory
+    - name: memory.total
+      type: quantity
+      value: "4Gi"
+    - name: memory.type
+      type: string
+      value: "LPDDR4"
+    - name: memory.bandwidthmbps
+      type: integer
+      value: "8500"
+      unit: "MB/s"
+    
+    # Storage
+    - name: storage.total
+      type: quantity
+      value: "32Gi"
+    - name: storage.type
+      type: string
+      value: "SD"
+    - name: storage.readmbps
+      type: integer
+      value: "95"
+      unit: "MB/s"
+    - name: storage.writembps
+      type: integer
+      value: "65"
+      unit: "MB/s"
+    
+    # Power (Raspberry Pi is very power efficient)
+    - name: power.idle
+      type: integer
+      value: "2"
+      unit: "watts"
+    - name: power.max
+      type: integer
+      value: "6"
+      unit: "watts"
+    - name: power.efficiency
+      type: float
+      value: "122"
+      unit: "benchmark/watt"
+      description: "Compute efficiency ratio"
+    
+    # Timing
+    - name: boot.timeseconds
+      type: integer
+      value: "45"
+      unit: "seconds"
+    
+    # Custom features - add whatever you need!
+    - name: network.bandwidth
+      type: quantity
+      value: "1Gi"
+    - name: network.type
+      type: string
+      value: "ethernet"
+    - name: hardware.form
+      type: string
+      value: "SBC"
+      description: "Single Board Computer"
+    - name: thermal.passive
+      type: boolean
+      value: "true"
+      description: "Passive cooling only"
+
+  labels:
+    tier: "edge"
+    formfactor: "sbc"
+    location: "homelab"

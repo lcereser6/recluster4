@@ -1,0 +1,69 @@
+apiVersion: recluster.io/v1
+kind: RcNode
+metadata:
+  name: rcn-x86-remote-01
+spec:
+  nodeGroup: x86-remote
+  desiredPhase: Offline
+  
+  resources:
+    allocatable:
+      cpu: "32"
+      memory: 64Gi
+      pods: "200"
+    systemReserved:
+      cpu: "2"
+      memory: 8Gi
+  
+  compute:
+    architecture: amd64
+    vendor: AMD
+    model: EPYC 7302
+    cores: 16
+    threads: 32
+    benchmarks:
+      singleThreadScore: 1200
+      multiThreadScore: 20000
+  
+  memory:
+    total: 128Gi
+    type: DDR4
+    benchmarks:
+      bandwidthMBps: 85000
+      latencyNs: 75
+  
+  storage:
+    total: 2Ti
+    type: NVMe
+    benchmarks:
+      sequentialReadMBps: 3500
+      sequentialWriteMBps: 3000
+      randomReadIOPS: 500000
+  
+  power:
+    idleWatts: 80
+    maxWatts: 280
+    powerCurve:
+      - utilizationPercent: 0
+        watts: 80
+      - utilizationPercent: 50
+        watts: 180
+      - utilizationPercent: 100
+        watts: 280
+  
+  activation:
+    bootTimeSeconds:
+      p50: 60
+      p95: 90
+    shutdownTimeSeconds: 20
+    wakeMethod: ssh
+    sshConfig:
+      host: "ipmi-rcn-remote-01.example.com"
+      port: 22
+      user: "admin"
+      authSecretRef: "ipmi-ssh-key"
+      wakeCommand: "ipmitool power on"
+  
+  labels:
+    topology.kubernetes.io/zone: zone-c
+    recluster.io/priority: medium

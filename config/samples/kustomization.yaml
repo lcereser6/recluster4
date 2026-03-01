@@ -1,0 +1,9 @@
+## Append samples of your project ##
+resources:
+# Sample RcNodes with modular Features
+- rcnode-sample-1.yaml
+- rcnode-sample-2.yaml
+- rcnode-sample-3.yaml
+# Default RcPolicy
+- rcpolicy-default.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples

@@ -1,0 +1,67 @@
+# Old laptop repurposed as a low-power node
+# Uses Wake-on-LAN for power management
+apiVersion: recluster.io/v1
+kind: RcNode
+metadata:
+  name: laptop-thinkpad
+  labels:
+    recluster.io/node-group: x86-old
+    location: home-lab
+spec:
+  nodeGroup: x86-old
+  desiredPhase: Offline
+
+  resources:
+    allocatable:
+      cpu: "2"
+      memory: 6Gi
+      pods: "20"
+    systemReserved:
+      cpu: "200m"
+      memory: 2Gi
+
+  compute:
+    architecture: amd64
+    vendor: Intel
+    model: "Core i5-6300U"
+    cores: 2
+    threads: 4
+    benchmarks:
+      singleThreadScore: 1400
+      multiThreadScore: 3200
+
+  memory:
+    total: 8Gi
+    type: DDR4
+    benchmarks:
+      bandwidthMBps: 17000
+      latencyNs: 60
+
+  storage:
+    total: 500Gi
+    type: SSD
+    benchmarks:
+      sequentialReadMBps: 540
+      sequentialWriteMBps: 500
+      randomReadIOPS: 90000
+
+  power:
+    idleWatts: 8
+    maxWatts: 25
+    powerCurve:
+      - utilizationPercent: 0
+        watts: 8
+      - utilizationPercent: 50
+        watts: 15
+      - utilizationPercent: 100
+        watts: 25
+
+  activation:
+    bootTimeSeconds:
+      p50: 35
+      p95: 50
+    shutdownTimeSeconds: 12
+    wakeMethod: wol
+    wolConfig:
+      macAddress: "aa:bb:cc:dd:ee:03"
+      broadcastAddress: "192.168.1.255"

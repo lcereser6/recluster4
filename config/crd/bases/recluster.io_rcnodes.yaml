@@ -1,0 +1,348 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.2
+  name: rcnodes.recluster.io
+spec:
+  group: recluster.io
+  names:
+    kind: RcNode
+    listKind: RcNodeList
+    plural: rcnodes
+    singular: rcnode
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.nodeGroup
+      name: Node Group
+      type: string
+    - jsonPath: .spec.desiredPhase
+      name: Desired
+      type: string
+    - jsonPath: .status.currentPhase
+      name: Current
+      type: string
+    - jsonPath: .spec.activation.wakeMethod
+      name: Wake Method
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          RcNode is the Schema for the rcnodes API.
+          RcNode represents a physical or virtual node that can be brought online/offline
+          dynamically by the recluster controller.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: RcNodeSpec defines the desired state of RcNode.
+            properties:
+              activation:
+                description: Activation defines how to boot/shutdown the node (required)
+                properties:
+                  smartPlugConfig:
+                    description: Smart plug configuration (required if wakeMethod
+                      is "smartplug")
+                    properties:
+                      authSecretRef:
+                        description: API token or password for authentication (reference
+                          to a secret)
+                        type: string
+                      host:
+                        description: IP address or hostname of the smart plug
+                        type: string
+                      plugId:
+                        description: Plug ID for multi-outlet smart plugs
+                        type: string
+                      port:
+                        description: Port number for the smart plug API
+                        type: integer
+                    required:
+                    - host
+                    type: object
+                  sshConfig:
+                    description: SSH configuration (required if wakeMethod is "ssh")
+                    properties:
+                      authSecretRef:
+                        description: Reference to secret containing SSH key or password
+                        type: string
+                      host:
+                        description: SSH host to connect to (jump host or IPMI)
+                        type: string
+                      port:
+                        description: SSH port
+                        type: integer
+                      user:
+                        description: SSH user
+                        type: string
+                      wakeCommand:
+                        description: Command to execute to wake the node
+                        type: string
+                    required:
+                    - host
+                    - user
+                    type: object
+                  wakeMethod:
+                    description: Method used to wake/power on the node
+                    enum:
+                    - wol
+                    - smartplug
+                    - ssh
+                    - manual
+                    type: string
+                  wolConfig:
+                    description: Wake-on-LAN configuration (required if wakeMethod
+                      is "wol")
+                    properties:
+                      broadcastAddress:
+                        description: Broadcast address for Wake-on-LAN packets
+                        type: string
+                      macAddress:
+                        description: MAC address for Wake-on-LAN
+                        type: string
+                    required:
+                    - macAddress
+                    type: object
+                required:
+                - wakeMethod
+                type: object
+              desiredPhase:
+                default: Offline
+                description: DesiredPhase is the desired operational state of the
+                  node
+                enum:
+                - Online
+                - Offline
+                - Booting
+                - ShuttingDown
+                - Error
+                type: string
+              features:
+                description: |-
+                  Features is a flexible array of node characteristics.
+                  Users can define any feature they want using the Feature schema.
+                  Features are used for scoring, filtering, and display purposes.
+                items:
+                  description: |-
+                    Feature represents a single characteristic of an RcNode.
+                    Features are flexible key-value pairs that allow users to define
+                    any node characteristic without schema limitations.
+
+                    Common feature names (recommended conventions):
+                      - compute.cores: Number of CPU cores (integer)
+                      - compute.threads: Total threads (integer)
+                      - compute.architecture: CPU architecture like arm64, amd64 (string)
+                      - compute.model: CPU model name (string)
+                      - compute.clockMhz: Base clock speed (integer, unit: MHz)
+                      - compute.benchmark.single: Single-thread benchmark score (integer)
+                      - compute.benchmark.multi: Multi-thread benchmark score (integer)
+                      - memory.total: Total memory (quantity, e.g., "8Gi")
+                      - memory.type: Memory type like DDR4, DDR5 (string)
+                      - memory.bandwidthMbps: Memory bandwidth (integer, unit: MB/s)
+                      - storage.total: Total storage (quantity, e.g., "256Gi")
+                      - storage.type: Storage type like SSD, NVMe, HDD (string)
+                      - storage.readMbps: Sequential read speed (integer, unit: MB/s)
+                      - storage.writeMbps: Sequential write speed (integer, unit: MB/s)
+                      - power.idle: Idle power consumption (integer, unit: watts)
+                      - power.max: Maximum power consumption (integer, unit: watts)
+                      - network.bandwidth: Network bandwidth (quantity, e.g., "1Gi")
+                      - boot.timeSeconds: Expected boot time (integer, unit: seconds)
+                      - shutdown.timeSeconds: Expected shutdown time (integer, unit: seconds)
+                  properties:
+                    description:
+                      description: Description provides human-readable context for
+                        this feature
+                      type: string
+                    name:
+                      description: |-
+                        Name is the unique identifier for this feature.
+                        Use dot notation for categories (e.g., "cpu.cores", "memory.total", "power.idle")
+                      pattern: ^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$
+                      type: string
+                    type:
+                      default: string
+                      description: Type defines how to interpret the value
+                      enum:
+                      - quantity
+                      - integer
+                      - float
+                      - string
+                      - boolean
+                      type: string
+                    unit:
+                      description: |-
+                        Unit is an optional display unit for the value (e.g., "MHz", "MB/s", "watts").
+                        This is for documentation purposes and UI display.
+                      type: string
+                    value:
+                      description: |-
+                        Value is the string representation of the feature value.
+                        Interpreted according to Type:
+                        - quantity: Kubernetes quantity (e.g., "4Gi", "2000m", "500Mi")
+                        - integer: Whole number (e.g., "4", "8", "16")
+                        - float: Decimal number (e.g., "3.14", "2.5")
+                        - string: Text value (e.g., "DDR4", "arm64")
+                        - boolean: "true" or "false"
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
+              labels:
+                additionalProperties:
+                  type: string
+                description: Labels are additional labels to apply to the node when
+                  it joins the cluster
+                type: object
+              nodeGroup:
+                description: NodeGroup this node belongs to (optional grouping for
+                  similar nodes)
+                type: string
+              resources:
+                description: |-
+                  Resources defines the Kubernetes-native resources for scheduling.
+                  These will be reported to the scheduler (cpu, memory, ephemeral-storage, etc.)
+                properties:
+                  allocatable:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: Allocatable resources available for pods
+                    type: object
+                  reserved:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: Reserved resources for system daemons
+                    type: object
+                type: object
+              taints:
+                description: Taints to apply to the node when it joins the cluster
+                items:
+                  type: string
+                type: array
+            required:
+            - activation
+            type: object
+          status:
+            description: RcNodeStatus defines the observed state of RcNode.
+            properties:
+              conditions:
+                description: Conditions represent the latest available observations
+                  of the node's state
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              currentPhase:
+                description: CurrentPhase is the current operational state of the
+                  node
+                enum:
+                - Online
+                - Offline
+                - Booting
+                - ShuttingDown
+                - Error
+                type: string
+              lastBootTime:
+                description: LastBootTime records when the node last started booting
+                format: date-time
+                type: string
+              lastShutdownTime:
+                description: LastShutdownTime records when the node last started shutting
+                  down
+                format: date-time
+                type: string
+              lastTransitionTime:
+                description: LastTransitionTime is the last time the phase changed
+                format: date-time
+                type: string
+              message:
+                description: Message provides additional information about the current
+                  state
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

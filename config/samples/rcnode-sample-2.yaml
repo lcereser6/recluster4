@@ -1,0 +1,62 @@
+# Sample RcNode 2: Raspberry Pi 4
+apiVersion: recluster.io/v1
+kind: RcNode
+metadata:
+  name: rpi4-node-01
+  labels:
+    recluster.io/node-group: edge
+spec:
+  nodeGroup: edge
+  desiredPhase: Offline
+
+  activation:
+    wakeMethod: smartplug
+    smartPlugConfig:
+      host: "192.168.1.50"
+      port: 9999
+
+  resources:
+    allocatable:
+      cpu: "4"
+      memory: 4Gi
+      pods: "30"
+
+  features:
+    - name: compute.cores
+      type: integer
+      value: "4"
+      description: "Broadcom BCM2711 quad-core"
+    - name: compute.threads
+      type: integer
+      value: "4"
+    - name: compute.clockmhz
+      type: integer
+      value: "1500"
+      unit: "MHz"
+    - name: compute.architecture
+      type: string
+      value: "arm64"
+    - name: memory.total
+      type: quantity
+      value: "4Gi"
+    - name: memory.type
+      type: string
+      value: "LPDDR4"
+    - name: storage.total
+      type: quantity
+      value: "128Gi"
+    - name: storage.type
+      type: string
+      value: "microSD"
+    - name: power.idle
+      type: integer
+      value: "3"
+      unit: "watts"
+    - name: power.max
+      type: integer
+      value: "7"
+      unit: "watts"
+    - name: boot.timeseconds
+      type: integer
+      value: "25"
+      unit: "seconds"

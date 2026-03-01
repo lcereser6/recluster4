@@ -1,0 +1,67 @@
+# Old x86 desktop repurposed as a Kubernetes node
+# Uses Wake-on-LAN for power management
+apiVersion: recluster.io/v1
+kind: RcNode
+metadata:
+  name: desktop-intel-i5
+  labels:
+    recluster.io/node-group: x86-old
+    location: office-a
+spec:
+  nodeGroup: x86-old
+  desiredPhase: Offline
+
+  resources:
+    allocatable:
+      cpu: "4"
+      memory: 14Gi
+      pods: "50"
+    systemReserved:
+      cpu: "500m"
+      memory: 2Gi
+
+  compute:
+    architecture: amd64
+    vendor: Intel
+    model: "Core i5-4590"
+    cores: 4
+    threads: 4
+    benchmarks:
+      singleThreadScore: 1800
+      multiThreadScore: 5400
+
+  memory:
+    total: 16Gi
+    type: DDR3
+    benchmarks:
+      bandwidthMBps: 21000
+      latencyNs: 55
+
+  storage:
+    total: 240Gi
+    type: SSD
+    benchmarks:
+      sequentialReadMBps: 550
+      sequentialWriteMBps: 450
+      randomReadIOPS: 75000
+
+  power:
+    idleWatts: 35
+    maxWatts: 84
+    powerCurve:
+      - utilizationPercent: 0
+        watts: 35
+      - utilizationPercent: 50
+        watts: 55
+      - utilizationPercent: 100
+        watts: 84
+
+  activation:
+    bootTimeSeconds:
+      p50: 45
+      p95: 60
+    shutdownTimeSeconds: 15
+    wakeMethod: wol
+    wolConfig:
+      macAddress: "aa:bb:cc:dd:ee:01"
+      broadcastAddress: "192.168.1.255"

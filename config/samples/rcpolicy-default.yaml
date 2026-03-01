@@ -1,0 +1,80 @@
+# Default RcPolicy - balanced scoring for general workloads
+apiVersion: recluster.io/v1
+kind: RcPolicy
+metadata:
+  name: default-policy
+spec:
+  # Priority determines which policy is selected when multiple match
+  # Higher priority policies take precedence (default: 0)
+  priority: 0
+
+  # Budgets control rate limits for power-on and migration operations
+  budgets:
+    maxConcurrentPowerOns: 3  # Max nodes booting at once
+    maxMigrationsPerHour: 10  # Max pod migrations per hour
+    maxPowerOnsPerHour: 20    # Max node power-ons per hour
+
+  multipliers:
+    # Compute features - reward more compute resources
+    - name: compute.cores
+      value: 10.0
+      curve: linear
+      weight: 80
+      description: "Reward more CPU cores"
+
+    - name: compute.threads
+      value: 5.0
+      curve: logarithmic
+      weight: 50
+      description: "Threads with diminishing returns"
+
+    - name: compute.clockmhz
+      value: 0.01
+      curve: linear
+      weight: 30
+      description: "Higher clock speed is better"
+
+    # Memory features
+    - name: memory.total
+      value: 2.0
+      curve: logarithmic
+      weight: 70
+      curveParams:
+        normalize: 1073741824  # Normalize by 1GiB
+      description: "More memory is better with diminishing returns"
+
+    # Storage features
+    - name: storage.total
+      value: 1.0
+      curve: logarithmic
+      weight: 40
+      curveParams:
+        normalize: 1073741824  # Normalize by 1GiB
+      description: "More storage is better"
+
+    # Power features - penalize high power consumption
+    - name: power.idle
+      value: -0.5
+      curve: linear
+      weight: 60
+      description: "Penalize high idle power consumption"
+
+    - name: power.max
+      value: -0.2
+      curve: linear
+      weight: 30
+      description: "Slightly penalize high max power"
+
+    # Boot time - prefer faster boot
+    - name: boot.timeseconds
+      value: -1.0
+      curve: inverse
+      weight: 50
+      curveParams:
+        offset: 10
+      description: "Prefer nodes that boot faster"
+
+  # Match pods with policy-tag label (empty means default for untagged pods)
+  # Pod labels like "recluster.io/policy-tag: batch" can be used to match specific policies
+  deploymentSelector:
+    matchLabels: {}

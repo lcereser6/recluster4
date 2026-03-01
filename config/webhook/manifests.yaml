@@ -1,0 +1,43 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: recluster-pod-scheduling-gate
+  # Remove cert-manager annotation - we'll inject CA manually
+webhooks:
+  - name: pod-scheduling-gate.recluster.io
+    admissionReviewVersions:
+      - v1
+    clientConfig:
+      service:
+        name: recluster4-webhook-service
+        namespace: recluster4-system
+        path: /mutate-pod-scheduling-gate
+        port: 443
+      # caBundle will be injected by hack/generate-webhook-certs.sh
+    rules:
+      - operations:
+          - CREATE
+        apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        resources:
+          - pods
+        scope: Namespaced
+    failurePolicy: Fail
+    sideEffects: None
+    matchPolicy: Equivalent
+    namespaceSelector:
+      matchExpressions:
+        # Exclude system namespaces
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values:
+            - kube-system
+            - kube-public
+            - kube-node-lease
+            - recluster4-system
+            - monitoring
+            - cert-manager
+    reinvocationPolicy: Never
+    timeoutSeconds: 10

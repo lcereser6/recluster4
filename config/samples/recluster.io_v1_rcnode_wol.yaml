@@ -1,0 +1,66 @@
+apiVersion: recluster.io/v1
+kind: RcNode
+metadata:
+  name: rcn-x86-old-01
+spec:
+  nodeGroup: x86-old
+  desiredPhase: Offline
+  
+  resources:
+    allocatable:
+      cpu: "15"
+      memory: 28Gi
+      pods: "110"
+    systemReserved:
+      cpu: "1"
+      memory: 4Gi
+  
+  compute:
+    architecture: amd64
+    vendor: Intel
+    model: Xeon E5-2670 v2
+    cores: 16
+    threads: 32
+    benchmarks:
+      singleThreadScore: 800
+      multiThreadScore: 8000
+  
+  memory:
+    total: 32Gi
+    type: DDR3
+    benchmarks:
+      bandwidthMBps: 50000
+      latencyNs: 120
+  
+  storage:
+    total: 500Gi
+    type: SSD
+    benchmarks:
+      sequentialReadMBps: 550
+      sequentialWriteMBps: 500
+      randomReadIOPS: 80000
+  
+  power:
+    idleWatts: 120
+    maxWatts: 350
+    powerCurve:
+      - utilizationPercent: 0
+        watts: 120
+      - utilizationPercent: 50
+        watts: 240
+      - utilizationPercent: 100
+        watts: 350
+  
+  activation:
+    bootTimeSeconds:
+      p50: 90
+      p95: 120
+    shutdownTimeSeconds: 30
+    wakeMethod: wol
+    wolConfig:
+      macAddress: "00:11:22:33:44:01"
+      broadcastAddress: "192.168.1.255"
+  
+  labels:
+    topology.kubernetes.io/zone: zone-b
+    recluster.io/priority: low

@@ -1,0 +1,71 @@
+# Powerful workstation with AMD Ryzen 9
+# Uses Wake-on-LAN for power management
+apiVersion: recluster.io/v1
+kind: RcNode
+metadata:
+  name: workstation-ryzen9
+  labels:
+    recluster.io/node-group: x86-remote
+    location: datacenter
+spec:
+  nodeGroup: x86-remote
+  desiredPhase: Offline
+
+  resources:
+    allocatable:
+      cpu: "24"
+      memory: 120Gi
+      pods: "150"
+    systemReserved:
+      cpu: "2"
+      memory: 8Gi
+
+  compute:
+    architecture: amd64
+    vendor: AMD
+    model: "Ryzen 9 5900X"
+    cores: 12
+    threads: 24
+    benchmarks:
+      singleThreadScore: 3500
+      multiThreadScore: 28000
+
+  memory:
+    total: 128Gi
+    type: DDR4
+    benchmarks:
+      bandwidthMBps: 50000
+      latencyNs: 42
+
+  storage:
+    total: 2Ti
+    type: NVMe
+    benchmarks:
+      sequentialReadMBps: 7000
+      sequentialWriteMBps: 5500
+      randomReadIOPS: 1000000
+
+  power:
+    idleWatts: 65
+    maxWatts: 180
+    powerCurve:
+      - utilizationPercent: 0
+        watts: 65
+      - utilizationPercent: 25
+        watts: 95
+      - utilizationPercent: 50
+        watts: 120
+      - utilizationPercent: 75
+        watts: 150
+      - utilizationPercent: 100
+        watts: 180
+
+  activation:
+    bootTimeSeconds:
+      p50: 20
+      p95: 30
+    shutdownTimeSeconds: 10
+    wakeMethod: wol
+    wolConfig:
+      macAddress: "aa:bb:cc:dd:ee:02"
+      broadcastAddress: "10.0.0.255"

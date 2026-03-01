@@ -1,0 +1,67 @@
+# Sample RcNode 3: Server
+apiVersion: recluster.io/v1
+kind: RcNode
+metadata:
+  name: server-dell-01
+  labels:
+    recluster.io/node-group: servers
+spec:
+  nodeGroup: servers
+  desiredPhase: Offline
+
+  activation:
+    wakeMethod: ssh
+    sshConfig:
+      host: "ipmi.server-dell-01.local"
+      port: 22
+      user: "admin"
+      wakeCommand: "ipmitool power on"
+
+  resources:
+    allocatable:
+      cpu: "32"
+      memory: 128Gi
+      pods: "250"
+
+  features:
+    - name: compute.cores
+      type: integer
+      value: "32"
+      description: "Dual Xeon Silver 4314"
+    - name: compute.threads
+      type: integer
+      value: "64"
+    - name: compute.clockmhz
+      type: integer
+      value: "2400"
+      unit: "MHz"
+    - name: compute.architecture
+      type: string
+      value: "amd64"
+    - name: memory.total
+      type: quantity
+      value: "128Gi"
+    - name: memory.type
+      type: string
+      value: "DDR4-ECC"
+    - name: storage.total
+      type: quantity
+      value: "4Ti"
+    - name: storage.type
+      type: string
+      value: "NVMe-RAID"
+    - name: power.idle
+      type: integer
+      value: "150"
+      unit: "watts"
+    - name: power.max
+      type: integer
+      value: "500"
+      unit: "watts"
+    - name: boot.timeseconds
+      type: integer
+      value: "120"
+      unit: "seconds"
+    - name: network.bandwidth
+      type: quantity
+      value: "10Gi"
